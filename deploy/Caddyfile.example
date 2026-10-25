@@ -1,0 +1,5 @@
+# Alternative plus simple : Caddy obtient et renouvelle le certificat automatiquement.
+# Réseau local / laboratoire sans nom de domaine public : ajoutez « tls internal » dans le bloc.
+vm.example.org {
+    reverse_proxy 127.0.0.1:8080
+}

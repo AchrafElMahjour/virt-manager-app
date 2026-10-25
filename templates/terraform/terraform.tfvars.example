@@ -1,0 +1,8 @@
+libvirt_uri = "qemu:///system"
+vm_name     = "lab-terraform-01"
+vcpus       = 2
+memory_mib  = 2048
+disk_gib    = 20
+pool        = "default"
+network     = "default"
+# iso_path  = "/var/lib/libvirt/images/debian-install.iso"

@@ -1,0 +1,46 @@
+---
+# Virt Manager — modèle Ansible : crée et démarre une VM libvirt (idempotent).
+#
+# Prérequis sur la machine de contrôle :
+#   ansible-galaxy collection install community.libvirt
+# Prérequis sur l'hôte cible : libvirt-daemon-system, qemu-utils, python3-libvirt, python3-lxml.
+#
+# Utilisation :
+#   ansible-playbook -i inventory.ini create-vm.yml -e vm_name=lab-ansible-01
+#   ansible-playbook -i inventory.ini create-vm.yml -e vm_iso=/var/lib/libvirt/images/debian.iso
+- name: Créer une VM libvirt
+  hosts: hypervisors
+  become: true
+  gather_facts: false
+  vars:
+    vm_name: lab-ansible-01
+    vm_vcpus: 2
+    vm_memory_mib: 2048
+    vm_disk_gib: 20
+    vm_images_dir: /var/lib/libvirt/images
+    vm_network: default
+    vm_domain_type: kvm   # « qemu » si l'hôte n'a pas d'accélération KVM
+    vm_iso: ""
+  tasks:
+    - name: Lister les VM existantes
+      community.libvirt.virt:
+        command: list_vms
+      register: existing_vms
+      changed_when: false
+
+    - name: Créer le disque qcow2
+      ansible.builtin.command:
+        cmd: "qemu-img create -f qcow2 {{ vm_images_dir }}/{{ vm_name }}.qcow2 {{ vm_disk_gib }}G"
+        creates: "{{ vm_images_dir }}/{{ vm_name }}.qcow2"
+      when: vm_name not in existing_vms.list_vms
+
+    - name: Définir la VM
+      community.libvirt.virt:
+        command: define
+        xml: "{{ lookup('ansible.builtin.template', 'vm.xml.j2') }}"
+      when: vm_name not in existing_vms.list_vms
+
+    - name: Démarrer la VM
+      community.libvirt.virt:
+        name: "{{ vm_name }}"
+        state: running

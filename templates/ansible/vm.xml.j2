@@ -1,0 +1,35 @@
+<domain type='{{ vm_domain_type | default("kvm") }}'>
+  <name>{{ vm_name }}</name>
+  <memory unit='MiB'>{{ vm_memory_mib }}</memory>
+  <vcpu placement='static'>{{ vm_vcpus }}</vcpu>
+  <os>
+    <type arch='x86_64'>hvm</type>
+{% if vm_iso | default('') != '' %}
+    <boot dev='cdrom'/>
+{% endif %}
+    <boot dev='hd'/>
+  </os>
+  <features><acpi/><apic/></features>
+  <devices>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='{{ vm_images_dir }}/{{ vm_name }}.qcow2'/>
+      <target dev='vda' bus='virtio'/>
+    </disk>
+{% if vm_iso | default('') != '' %}
+    <disk type='file' device='cdrom'>
+      <driver name='qemu' type='raw'/>
+      <source file='{{ vm_iso }}'/>
+      <target dev='sda' bus='sata'/>
+      <readonly/>
+    </disk>
+{% endif %}
+    <interface type='network'>
+      <source network='{{ vm_network }}'/>
+      <model type='virtio'/>
+    </interface>
+    <graphics type='vnc' port='-1' autoport='yes' listen='127.0.0.1'/>
+    <video><model type='virtio'/></video>
+    <console type='pty'/>
+  </devices>
+</domain>
